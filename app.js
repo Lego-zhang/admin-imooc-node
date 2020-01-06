@@ -7,8 +7,16 @@ const https = require("https");
 // 解析 boby
 const bodyParser = require("body-parser");
 
+// 解决跨域问题
+const cors = require("cors")
+
 // 创建 express 应用
 const app = express();
+
+
+// 使用cors() 跨域扩展
+
+app.use(cors())
 
 // 解析路由参数
 app.use(bodyParser.urlencoded({ extended: true }));
