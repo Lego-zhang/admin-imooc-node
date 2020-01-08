@@ -2,30 +2,27 @@ const express = require("express");
 
 const Result = require("../models/Result");
 
-const { querySql } = require("../db");
+const { md5 } = require("../utils/index");
+
+const { login } = require("../services/user");
+const { PWD_SALT } = require("../utils/constant");
 
 const router = express.Router();
 
 router.post("/login", function(req, res) {
   // console.log(req.body);
-  const { username, password } = req.body;
+  let { username, password } = req.body;
 
-  // console.log(querSql())
+  password = md5(`${password}${PWD_SALT}`);
 
-  querySql("select * from admin_user").then(results => {
-    // console.log(results);
-  }).catch(err=>{
-    // console.log(err)
-  })
-
-
-
-  // new Result("登录成功").success(res);
-  if (username === "admin" && password === "admin") {
-    new Result("登录成功").success(res);
-  } else {
-    new Result("登录失败").fail(res);
-  }
+  login(username, password).then(user => {
+    console.log(user + "1");
+    if (!user || user.length === 0) {
+      new Result("登录失败").fail(res);
+    } else {
+      new Result("登录成功").success(res);
+    }
+  });
 });
 
 router.get("/info", function(req, res, next) {

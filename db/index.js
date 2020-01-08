@@ -20,7 +20,6 @@ function connect() {
 // 查询完成要进行释放连接,不进行释放连接，连接会保存在内存当中，造成内存泄漏  conn.end();
 
 
-
 function querySql(sql) {
   const conn = connect();
   debug && console.log(sql);
