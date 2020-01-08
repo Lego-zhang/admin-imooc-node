@@ -21,10 +21,11 @@ app.use(cors())
 // 解析路由参数
 app.use(bodyParser.urlencoded({ extended: true }));
 // 解析json 形式的body
+app.use(bodyParser.json());
 
 app.use("/", router);
 // 监听 / 路径的 get 请求
-app.use(bodyParser.json());
+
 
 const privateKey = fs.readFileSync("https/summerxiatian.top.key", "utf8");
 const certificate = fs.readFileSync("https/summerxiatian.top.pem", "utf8");
