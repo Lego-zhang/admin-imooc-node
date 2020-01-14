@@ -1,4 +1,4 @@
-const { CODE_ERROR, CODE_SUCCESS } = require("../utils/constant");
+const { CODE_ERROR, CODE_SUCCESS ,CODE_TOKEN_EXPIRED} = require("../utils/constant");
 
 class Result {
   constructor(data, msg = "操作成功", options) {
@@ -47,6 +47,13 @@ class Result {
     this.code = CODE_ERROR;
     this.json(res);
   }
+
+  jwtError(res) {
+    this.code = CODE_TOKEN_EXPIRED;
+    this.json(res);
+  }
+
+
 }
 
 module.exports = Result;
