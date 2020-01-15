@@ -2,9 +2,9 @@ const express = require("express");
 
 const Result = require("../models/Result");
 
-const { md5 } = require("../utils/index");
+const { md5, decoded } = require("../utils/index");
 
-const { login } = require("../services/user");
+const { login, findUser } = require("../services/user");
 
 const { PWD_SALT, PRIVATE_KEY, JWT_EXPIRED } = require("../utils/constant");
 
@@ -57,7 +57,22 @@ router.post(
 );
 
 router.get("/info", function(req, res, next) {
-  res.json("user info...");
+  // 根据项目实际的Username动态的去获取用户名
+  // 从header中拿到JWT进行解析 用户名
+  const decode = decoded(req);
+
+  if (decode && decode.username) {
+    findUser("admin").then(user => {
+      if (user) {
+        user.roles = [user.role]
+        new Result(user, "用户信息查询成功").success(res);
+      } else {
+        new Result("用户信息查询失败").fail(res);
+      }
+    });
+  } else {
+    new Result("用户信息查询失败").fail(res);
+  }
 });
 
 module.exports = router;

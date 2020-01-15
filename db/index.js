@@ -2,7 +2,7 @@ const mysql = require("mysql");
 
 const config = require("./config");
 
-const debug = require("./../utils/constant")
+const debug = require("./../utils/constant");
 // 连接
 function connect() {
   // 创建链接
@@ -16,9 +16,8 @@ function connect() {
   });
 }
 // 查询在当前文件中完成，不要暴露在外部，
-// 添加 querySql 
+// 添加 querySql
 // 查询完成要进行释放连接,不进行释放连接，连接会保存在内存当中，造成内存泄漏  conn.end();
-
 
 function querySql(sql) {
   const conn = connect();
@@ -27,7 +26,7 @@ function querySql(sql) {
     try {
       conn.query(sql, (err, results) => {
         if (err) {
-          // 增加日志输出 
+          // 增加日志输出
           // 当debug 为true时在终端显示错误提示
           debug && console.log("查询失败，原因:" + JSON.stringify(err));
           reject(err);
@@ -44,6 +43,24 @@ function querySql(sql) {
   });
 }
 
+// 单独查询某一个用户
+function queryOne(sql) {
+  return new Promise((resolve, reject) => {
+    querySql(sql)
+      .then(results => {
+        if (results && results.length > 0) {
+          resolve(results[0]);
+        } else {
+          resolve(null);
+        }
+      })
+      .catch(err => {
+        reject(err);
+      });
+  });
+}
+
 module.exports = {
-  querySql
+  querySql,
+  queryOne
 };
