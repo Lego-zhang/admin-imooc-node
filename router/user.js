@@ -60,9 +60,8 @@ router.get("/info", function(req, res, next) {
   // 根据项目实际的Username动态的去获取用户名
   // 从header中拿到JWT进行解析 用户名
   const decode = decoded(req);
-
   if (decode && decode.username) {
-    findUser(decoded.username).then(user => {
+    findUser(decode.username).then(user => {
       if (user) {
         user.roles = [user.role]
         new Result(user, "用户信息查询成功").success(res);
