@@ -1,7 +1,5 @@
-
-
 // 上传文件保存地址
-const {env} = require('./env')
+const { env } = require("./env");
 
 const UPLOAD_PATH =
   env === "dev"
@@ -16,6 +14,7 @@ module.exports = {
   PWD_SALT: "admin_imooc_node",
   PRIVATE_KEY: "admin_imooc_node_xiatian",
   JWT_EXPIRED: 60 * 60, // token失效时间
-  UPLOAD_PATH
+  UPLOAD_PATH,
+  MIME_TYPE_EPUB: "application/epub+zip"
 };
 // PWD_SALT 盐值可以当做pwd中的秘钥
