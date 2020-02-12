@@ -6,6 +6,11 @@ const UPLOAD_PATH =
     ? "/Users/longtian/Documents/code/server/upload/admin-upload-ebook"
     : "/root/upload/admin-upload/ebook";
 
+const UPLOAD_URL =
+  env === "dev"
+    ? "http://summerxiatian.top:9091/admin-upload-ebook"
+    : "http://www.summerxiatian.top:9091/admin-upload-ebook";
+
 module.exports = {
   CODE_SUCCESS: 0,
   CODE_ERROR: -1,
@@ -15,6 +20,7 @@ module.exports = {
   PRIVATE_KEY: "admin_imooc_node_xiatian",
   JWT_EXPIRED: 60 * 60, // token失效时间
   UPLOAD_PATH,
+  UPLOAD_URL,
   MIME_TYPE_EPUB: "application/epub+zip"
 };
 // PWD_SALT 盐值可以当做pwd中的秘钥
