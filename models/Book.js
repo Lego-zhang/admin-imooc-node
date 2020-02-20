@@ -8,6 +8,8 @@ const fs = require("fs");
 
 const Epub = require("../utils/epub");
 
+const xml2js = require("xml2js").parseString;
+
 class Book {
   constructor(file, data) {
     // 如果是file就是新上传的电子书，解析电子书
@@ -19,7 +21,7 @@ class Book {
     }
   }
   createBookFromFile(file) {
-    console.log("createBookFromFile", file);
+    // console.log("createBookFromFile", file);
 
     const {
       destination,
@@ -81,7 +83,7 @@ class Book {
     this.originalname = originalname;
   }
   createBookFromData(data) {
-    console.log("createBookFromData", data);
+    // console.log("createBookFromData", data);
   }
 
   parse() {
@@ -98,7 +100,7 @@ class Book {
         if (err) {
           reject(err);
         } else {
-          console.log("epub end", epub);
+          // console.log("epub end", epub);
 
           const {
             language,
@@ -117,28 +119,133 @@ class Book {
             this.publisher = publisher || "unknown";
             this.rootFile = epub.rootFile;
 
-            const handleGetImage = (err, file, mimeType) => {
-              if (err) {
-                reject(err);
-              } else {
-                const suffix = mimeType.split("/")[1];
+            try {
+              this.unzip();
+              this.parseContents(epub);
+              const handleGetImage = (err, file, mimeType) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  const suffix = mimeType.split("/")[1];
 
-                const coverPath = `${UPLOAD_PATH}/img/${this.filename}.${suffix}`;
+                  const coverPath = `${UPLOAD_PATH}/img/${this.filename}.${suffix}`;
 
-                const coverUrl = `${UPLOAD_URL}/img/${this.filename}.${suffix}`;
+                  const coverUrl = `${UPLOAD_URL}/img/${this.filename}.${suffix}`;
 
-                fs.writeFileSync(coverPath, file, "binary");
-                resolve(this);
-              }
-            };
-            console.log("cover", cover);
-            epub.getImage(cover, handleGetImage);
+                  fs.writeFileSync(coverPath, file, "binary");
+                  resolve(this);
+                }
+              };
+
+              // console.log("cover", cover);
+
+              epub.getImage(cover, handleGetImage);
+            } catch (e) {
+              reject(e);
+            }
+
             resolve(this);
           }
         }
       });
       epub.parse();
     });
+  }
+
+  unzip() {
+    const AdmZip = require("adm-zip");
+    const zip = new AdmZip(Book.genPath(this.path));
+    zip.extractAllTo(this.unzipPath, true);
+  }
+  parseContents(epub) {
+    function getNcxFilePath() {
+      const spine = epub && epub.spine;
+      const manifest = epub && epub.manifest;
+      const ncx = spine.toc && spine.toc.href;
+      const id = spine.toc && spine.toc.id;
+      // console.log("spine", ncx, manifest[id].href);
+
+      if (ncx) {
+        return ncx;
+      } else {
+        return manifest[id].href;
+      }
+    }
+
+    function findParent(array) {
+      return array.map(item => {
+        return item;
+      });
+    }
+
+    function flatten(array) {
+      return [].concat(
+        ...array.map(item => {
+          return item;
+        })
+      );
+    }
+
+    const ncxFilePath = `${this.unzipPath}/${getNcxFilePath()}`;
+
+    if (fs.existsSync(ncxFilePath)) {
+      return new Promise((resolve, reject) => {
+        const xml = fs.readFileSync(ncxFilePath, "utf-8");
+        const filename = this.filename;
+        xml2js(
+          xml,
+          {
+            explicitArray: false,
+            ignoreAttrs: false
+          },
+          (err, json) => {
+            if (err) {
+              reject(err);
+            } else {
+              const navMap = json.ncx.navMap;
+
+              if (navMap.navPoint && navMap.navPoint.length > 0) {
+                navMap.navPoint = findParent(navMap.navPoint);
+                const newNavMap = flatten(navMap.navPoint);
+
+                const chapters = [];
+                epub.flow.forEach((chapter, index) => {
+                  if (index + 1 > newNavMap.length) {
+                    return;
+                  }
+                  const nav = newNavMap[index];
+                  chapter.text = `${UPLOAD_URL}/unzip/${this.filename}/${chapter.href}`;
+
+                  // console.log(chapter.text);
+
+                  if (nav && nav.navLabel) {
+                    chapter.label = nav.navLabel.text || "";
+                  } else {
+                    chapter.label = "";
+                  }
+                  chapter.navId = nav["$"].id;
+                  chapter.fileName = filename;
+                  chapter.order = index + 1;
+                  chapters.push(chapter);
+                });
+                console.log(chapters);
+              } else {
+                reject(new Error("目录解析失败，目录数为0"));
+              }
+            }
+          }
+        );
+      });
+    } else {
+      throw new Error("目录文件不存在");
+    }
+    console.log("ncxFilePath", ncxFilePath);
+  }
+  static genPath(path) {
+    if (!path.startsWith("/")) {
+      path = `/${path}`;
+    }
+    return `${UPLOAD_PATH}${path}`;
   }
 }
 module.exports = Book;
