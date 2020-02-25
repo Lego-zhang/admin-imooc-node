@@ -6,6 +6,8 @@ const {
 
 const fs = require("fs");
 
+const path = require("path");
+
 const Epub = require("../utils/epub");
 
 const xml2js = require("xml2js").parseString;
@@ -21,8 +23,6 @@ class Book {
     }
   }
   createBookFromFile(file) {
-    // console.log("createBookFromFile", file);
-
     const {
       destination,
       filename,
@@ -68,6 +68,8 @@ class Book {
     this.publisher = "";
     // 目录
     this.contents = [];
+    // 树状嵌套目录
+    this.contentsTree = [];
     // 封面图片URL
     this.cover = "";
     // 封面图片路径
@@ -80,11 +82,9 @@ class Book {
     this.language = "";
     // 解压后文件夹链接
     this.unzipPath = unzipPath;
-    this.originalname = originalname;
+    this.originalName = originalname;
   }
-  createBookFromData(data) {
-    // console.log("createBookFromData", data);
-  }
+  createBookFromData(data) {}
 
   parse() {
     return new Promise((resolve, reject) => {
@@ -100,8 +100,6 @@ class Book {
         if (err) {
           reject(err);
         } else {
-          // console.log("epub end", epub);
-
           const {
             language,
             creator,
@@ -119,36 +117,40 @@ class Book {
             this.publisher = publisher || "unknown";
             this.rootFile = epub.rootFile;
 
+            const handleGetImage = (err, imgBuffer, mimeType) => {
+              if (err) {
+                reject(err);
+              } else {
+                const suffix = mimeType.split("/")[1];
+
+                const coverPath = `${UPLOAD_PATH}/img/${this.filename}.${suffix}`;
+
+                const coverUrl = `${UPLOAD_URL}/img/${this.filename}.${suffix}`;
+
+                fs.writeFileSync(coverPath, imgBuffer, "binary");
+                this.coverPath = coverPath;
+
+                this.cover = coverUrl;
+
+                resolve(this);
+              }
+            };
+
             try {
               this.unzip();
-              this.parseContents(epub);
-              const handleGetImage = (err, file, mimeType) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  const suffix = mimeType.split("/")[1];
-
-                  const coverPath = `${UPLOAD_PATH}/img/${this.filename}.${suffix}`;
-
-                  const coverUrl = `${UPLOAD_URL}/img/${this.filename}.${suffix}`;
-
-                  fs.writeFileSync(coverPath, file, "binary");
-                  resolve(this);
-                }
-              };
-
-              // console.log("cover", cover);
-
-              epub.getImage(cover, handleGetImage);
+              this.parseContents(epub).then(({ chapters, chaptersTree }) => {
+                this.contents = chapters;
+                this.contentsTree = chaptersTree;
+                epub.getImage(cover, handleGetImage);
+              });
             } catch (e) {
               reject(e);
             }
-
-            resolve(this);
           }
         }
       });
       epub.parse();
+      this.epub = epub;
     });
   }
 
@@ -157,13 +159,13 @@ class Book {
     const zip = new AdmZip(Book.genPath(this.path));
     zip.extractAllTo(this.unzipPath, true);
   }
+
   parseContents(epub) {
     function getNcxFilePath() {
       const spine = epub && epub.spine;
       const manifest = epub && epub.manifest;
       const ncx = spine.toc && spine.toc.href;
       const id = spine.toc && spine.toc.id;
-      // console.log("spine", ncx, manifest[id].href);
 
       if (ncx) {
         return ncx;
@@ -172,8 +174,17 @@ class Book {
       }
     }
 
-    function findParent(array) {
+    function findParent(array, level = 0, pid = "") {
       return array.map(item => {
+        item.level = level;
+        item.pid = pid;
+        if (item.navPoint && item.navPoint.length > 0) {
+          item.navPoint = findParent(item.navPoint, level + 1, item["$"].id);
+        } else if (item.navPoint) {
+          item.navPoint.level = level + 1;
+          item.navPoint.pid = item["$"].id;
+        }
+
         return item;
       });
     }
@@ -181,6 +192,11 @@ class Book {
     function flatten(array) {
       return [].concat(
         ...array.map(item => {
+          if (item.navPoint && item.navPoint.length > 0) {
+            return [].concat(item, ...flatten(item.navPoint));
+          } else if (item.navPoint) {
+            return [].concat(item, item.navPoint);
+          }
           return item;
         })
       );
@@ -191,6 +207,8 @@ class Book {
     if (fs.existsSync(ncxFilePath)) {
       return new Promise((resolve, reject) => {
         const xml = fs.readFileSync(ncxFilePath, "utf-8");
+        const dir = path.dirname(ncxFilePath).replace(UPLOAD_PATH, "");
+        console.log("dir", dir);
         const filename = this.filename;
         xml2js(
           xml,
@@ -209,26 +227,33 @@ class Book {
                 const newNavMap = flatten(navMap.navPoint);
 
                 const chapters = [];
-                epub.flow.forEach((chapter, index) => {
-                  if (index + 1 > newNavMap.length) {
-                    return;
-                  }
+
+                // console.log("nav", newNavMap[0].content["$"]);
+                // console.log("nav", newNavMap.length, epub.flow.length);
+                newNavMap.forEach((chapter, index) => {
+                  const src = chapter.content["$"].src;
+
                   const nav = newNavMap[index];
-                  chapter.text = `${UPLOAD_URL}/unzip/${this.filename}/${chapter.href}`;
+                  chapter.text = `${UPLOAD_URL}${dir}/${src}`;
 
-                  // console.log(chapter.text);
+                  chapter.label = chapter.navLabel.text || "";
 
-                  if (nav && nav.navLabel) {
-                    chapter.label = nav.navLabel.text || "";
-                  } else {
-                    chapter.label = "";
-                  }
-                  chapter.navId = nav["$"].id;
+                  chapter.navId = chapter["$"].id;
                   chapter.fileName = filename;
                   chapter.order = index + 1;
                   chapters.push(chapter);
                 });
-                console.log(chapters);
+                const chaptersTree = [];
+                chapters.forEach(c => {
+                  c.children = [];
+                  if (c.pid === "") {
+                    chaptersTree.push(c);
+                  } else {
+                    const parent = chapters.find(_ => _.navId === c.pid);
+                    parent.children.push(c);
+                  }
+                });
+                resolve({ chapters, chaptersTree });
               } else {
                 reject(new Error("目录解析失败，目录数为0"));
               }
@@ -239,8 +264,8 @@ class Book {
     } else {
       throw new Error("目录文件不存在");
     }
-    console.log("ncxFilePath", ncxFilePath);
   }
+
   static genPath(path) {
     if (!path.startsWith("/")) {
       path = `/${path}`;

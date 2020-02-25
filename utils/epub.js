@@ -179,7 +179,7 @@ class EPub extends EventEmitter {
     
                 if (!result.rootfiles || !result.rootfiles.rootfile) {
                     this.emit("error", new Error("No rootfiles found"));
-                    console.dir(result);
+                    // console.dir(result);
                     return;
                 }
     
@@ -753,7 +753,7 @@ class EPub extends EventEmitter {
         } else {
           const coverId = Object.keys(this.manifest).find(key => (this.manifest[key].properties === "cover-image")
           );
-          console.log('coverId',coverId)
+        //   console.log('coverId',coverId)
           if (coverId) {
 
             this.getFile(coverId, callback);
