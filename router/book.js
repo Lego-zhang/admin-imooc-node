@@ -8,6 +8,10 @@ const Result = require("../models/Result");
 const Book = require("../models/Book");
 const boom = require("boom");
 
+const { decoded } = require("../utils/index");
+
+const bookService = require("../services/book");
+
 const router = express.Router();
 
 router.post(
@@ -31,5 +35,15 @@ router.post(
     }
   }
 );
+// 请求、相应、下一个
+router.post("/create", function(req, res, next) {
+  const decode = decoded(req);
+  if (decode && decode.username) {
+    req.body.username = decode.username;
+  }
+  const book = new Book(null, req.body);
+
+  bookService.insertBook(book).then(() => {});
+});
 
 module.exports = router;

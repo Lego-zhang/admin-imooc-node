@@ -22,26 +22,23 @@ class Book {
       this.createBookFromData(data);
     }
   }
+
   createBookFromFile(file) {
-    const {
-      destination,
-      filename,
-      mimetype = MIME_TYPE_EPUB,
-      path,
-      originalname
-    } = file;
+    console.log("createBookFromFile", file);
+    const { destination, mimetype = MIME_TYPE_EPUB, path, originalname } = file;
+    const fileName = file.filename;
     // 电子书的文件后缀名
     const suffix = mimetype === MIME_TYPE_EPUB ? ".epub" : "";
     // 电子书的原有路劲
     const olbBookPath = path;
     // 电子书的新路径
-    const bookPath = `${destination}/${filename}${suffix}`;
+    const bookPath = `${destination}/${fileName}${suffix}`;
     // 电子书的下载URL链接
-    const url = `${UPLOAD_URL}/book/${filename}${suffix}`;
+    const url = `${UPLOAD_URL}/book/${fileName}${suffix}`;
     // 电子书解压后的文件夹路径
-    const unzipPath = `${UPLOAD_PATH}/unzip/${filename}`;
+    const unzipPath = `${UPLOAD_PATH}/unzip/${fileName}`;
     // 电子书解压后的文件夹URL
-    const unzipUrl = `${UPLOAD_URL}/unzip/${filename}`;
+    const unzipUrl = `${UPLOAD_URL}/unzip/${fileName}`;
 
     if (!fs.existsSync(unzipPath)) {
       fs.mkdirSync(unzipPath, { recursive: true });
@@ -51,15 +48,15 @@ class Book {
       fs.renameSync(olbBookPath, bookPath);
     }
     // 文件名
-    this.filename = filename;
+    this.fileName = fileName;
     // epub文件相对路径
-    this.path = `/book/${filename}${suffix}`;
+    this.path = `/book/${fileName}${suffix}`;
     // epub解压后相对路径
     this.filePath = this.path;
 
     this.url = url;
     // epub文件下载链接
-    this.unzipPath = `/unzip/${filename}`;
+    this.unzipPath = `/unzip/${fileName}`;
     // 书名
     this.title = "";
     // 作者
@@ -84,7 +81,28 @@ class Book {
     this.unzipPath = unzipPath;
     this.originalName = originalname;
   }
-  createBookFromData(data) {}
+
+  createBookFromData(data) {
+    this.fileName = data.fileName;
+    this.cover = data.coverPath;
+    this.title = data.title;
+    this.author = data.author;
+    this.publisher = data.publisher;
+    this.bookId = data.fileName;
+    this.language = data.language;
+    this.rootFile = data.rootFile;
+    this.originalName = data.originalName;
+    this.path = data.path || data.filePath;
+    this.filePath = data.path || data.filePath;
+    this.unzipPath = data.unzipPath;
+    this.coverPath = data.coverPath;
+    this.createUser = data.username;
+    this.createDt = new Date().getTime();
+    this.updateDt = new Date().getTime();
+    this.updateType = data.updateType === 0 ? data.updateType : 1;
+    this.category = data.category || 99;
+    this.categoryText = data.categoryText || "自定义";
+  }
 
   parse() {
     return new Promise((resolve, reject) => {
@@ -123,9 +141,9 @@ class Book {
               } else {
                 const suffix = mimeType.split("/")[1];
 
-                const coverPath = `${UPLOAD_PATH}/img/${this.filename}.${suffix}`;
+                const coverPath = `${UPLOAD_PATH}/img/${this.fileName}.${suffix}`;
 
-                const coverUrl = `${UPLOAD_URL}/img/${this.filename}.${suffix}`;
+                const coverUrl = `${UPLOAD_URL}/img/${this.fileName}.${suffix}`;
 
                 fs.writeFileSync(coverPath, imgBuffer, "binary");
                 this.coverPath = coverPath;
@@ -208,8 +226,7 @@ class Book {
       return new Promise((resolve, reject) => {
         const xml = fs.readFileSync(ncxFilePath, "utf-8");
         const dir = path.dirname(ncxFilePath).replace(UPLOAD_PATH, "");
-        console.log("dir", dir);
-        const filename = this.filename;
+        const fileName = this.fileName;
         xml2js(
           xml,
           {
@@ -239,7 +256,7 @@ class Book {
                   chapter.label = chapter.navLabel.text || "";
 
                   chapter.navId = chapter["$"].id;
-                  chapter.fileName = filename;
+                  chapter.fileName = fileName;
                   chapter.order = index + 1;
                   chapters.push(chapter);
                 });
