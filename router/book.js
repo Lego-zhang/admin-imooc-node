@@ -43,7 +43,14 @@ router.post("/create", function(req, res, next) {
   }
   const book = new Book(null, req.body);
 
-  bookService.insertBook(book).then(() => {});
+  bookService
+    .insertBook(book)
+    .then(() => {
+      new Result('添加电子书成功').success(res)
+    })
+    .catch(err => {
+      next(next(boom.badImplementation(err)));
+    });
 });
 
 module.exports = router;
