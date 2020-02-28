@@ -1,5 +1,6 @@
 const Book = require("../models/Book");
 const db = require("../db");
+const _ = require("lodash");
 
 function exists(book) {
   return false;
@@ -7,7 +8,27 @@ function exists(book) {
 
 function removeBook(book) {}
 
-function insertContents(book) {}
+async function insertContents(book) {
+  const contents = book.getContents();
+  console.log("contents", contents);
+  if (contents && contents.length > 0) {
+    for (let i = 0; i < contents.length; i++) {
+      const content = contents[i];
+      const _content = _.pick(content, [
+        "fileName",
+        "id",
+        "href",
+        "order",
+        "level",
+        "label",
+        "pid",
+        "navId"
+      ]);
+      console.log("_content", _content);
+      await db.insert(_content, "contents");
+    }
+  }
+}
 
 function insertBook(book) {
   return new Promise(async (resolve, reject) => {

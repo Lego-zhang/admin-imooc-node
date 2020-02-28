@@ -102,6 +102,7 @@ class Book {
     this.updateType = data.updateType === 0 ? data.updateType : 1;
     this.category = data.category || 99;
     this.categoryText = data.categoryText || "自定义";
+    this.contents = data.contents || [];
   }
 
   parse() {
@@ -245,12 +246,12 @@ class Book {
 
                 const chapters = [];
 
-                // console.log("nav", newNavMap[0].content["$"]);
-                // console.log("nav", newNavMap.length, epub.flow.length);
                 newNavMap.forEach((chapter, index) => {
                   const src = chapter.content["$"].src;
 
                   const nav = newNavMap[index];
+                  chapter.id = `${src}`;
+                  chapter.href = `${dir}/${src}`.replace(this.unzipPath, "");
                   chapter.text = `${UPLOAD_URL}${dir}/${src}`;
 
                   chapter.label = chapter.navLabel.text || "";
@@ -304,6 +305,10 @@ class Book {
       category: this.category,
       categoryText: this.categoryText
     };
+  }
+
+  getContents() {
+    return this.contents;
   }
 
   static genPath(path) {
