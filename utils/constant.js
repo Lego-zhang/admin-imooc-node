@@ -11,6 +11,11 @@ const UPLOAD_URL =
     ? "http://summerxiatian.top:9091/admin-upload-ebook"
     : "http://www.summerxiatian.top:9091/admin-upload-ebook";
 
+const OLD_UPLOAD_URL =
+  env === "dev"
+    ? "http://summerxiatian.top:9091/book/res/img"
+    : "http://www.summerxiatian.top:9091/book/res/img";
+
 module.exports = {
   CODE_SUCCESS: 0,
   CODE_ERROR: -1,
@@ -21,6 +26,7 @@ module.exports = {
   JWT_EXPIRED: 60 * 60, // token失效时间
   UPLOAD_PATH,
   UPLOAD_URL,
+  OLD_UPLOAD_URL,
   MIME_TYPE_EPUB: "application/epub+zip"
 };
 // PWD_SALT 盐值可以当做pwd中的秘钥

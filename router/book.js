@@ -46,7 +46,40 @@ router.post("/create", function(req, res, next) {
   bookService
     .insertBook(book)
     .then(() => {
-      new Result('添加电子书成功').success(res)
+      new Result("添加电子书成功").success(res);
+    })
+    .catch(err => {
+      next(next(boom.badImplementation(err)));
+    });
+});
+
+router.get("/get", function(req, res, next) {
+  const { fileName } = req.query;
+  if (!fileName) {
+    next(boom.badRequest(new Error("参数FileName不能为空")));
+  } else {
+    bookService
+      .getBook(fileName)
+      .then(book => {
+        new Result(book, "获取图书信息成功").success(res);
+      })
+      .catch(err => {
+        next(boom.badImplementation(err));
+      });
+  }
+});
+
+router.post("/update", function(req, res, next) {
+  const decode = decoded(req);
+  if (decode && decode.username) {
+    req.body.username = decode.username;
+  }
+  const book = new Book(null, req.body);
+
+  bookService
+    .updateBook(book)
+    .then(() => {
+      new Result("更新电子书成功").success(res);
     })
     .catch(err => {
       next(next(boom.badImplementation(err)));
