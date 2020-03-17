@@ -4,17 +4,17 @@ const { env } = require("./env");
 const UPLOAD_PATH =
   env === "dev"
     ? "/Users/longtian/Documents/code/server/upload/admin-upload-ebook"
-    : "/root/upload/admin-upload/ebook";
+    : "/root/upload/admin-upload/admin-upload-ebook";
 
 const UPLOAD_URL =
   env === "dev"
-    ? "http://summerxiatian.top:9091/admin-upload-ebook"
-    : "http://www.summerxiatian.top:9091/admin-upload-ebook";
+    ? "https://summerxiatian.top/admin-upload-ebook"
+    : "https://summerxiatian.top/admin-upload-ebook";
 
 const OLD_UPLOAD_URL =
   env === "dev"
-    ? "http://summerxiatian.top:9091/book/res/img"
-    : "http://www.summerxiatian.top:9091/book/res/img";
+    ? "https://summerxiatian.top/book/res/img"
+    : "https://summerxiatian.top/book/res/img";
 
 module.exports = {
   CODE_SUCCESS: 0,
