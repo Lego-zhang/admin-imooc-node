@@ -4,7 +4,7 @@ const { env } = require("./env");
 const UPLOAD_PATH =
   env === "dev"
     ? "/Users/longtian/Documents/code/server/upload/admin-upload-ebook"
-    : "/root/nginx/upload/admin-upload-ebook/admin-upload-ebook";
+    : "/root/nginx/upload/admin-upload-ebook";
 
 const UPLOAD_URL =
   env === "dev"
