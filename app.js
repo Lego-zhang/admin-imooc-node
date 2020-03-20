@@ -36,10 +36,10 @@ const httpsServer = https.createServer(credentials, app);
 const SSLPORT = 18082;
 
 // 使 express 监听 5000 端口号发起的 http 请求
-const server = app.listen(5000, function() {
-  const { address, port } = server.address();
-  console.log("Http Server is running on http://%s:%s", address, port);
-});
+// const server = app.listen(5000, function() {
+//   const { address, port } = server.address();
+//   console.log("Http Server is running on http://%s:%s", address, port);
+// });
 
 httpsServer.listen(SSLPORT, function() {
   console.log("HTTPS Server is running on: https://localhost:%s", SSLPORT);
