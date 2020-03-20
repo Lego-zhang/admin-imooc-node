@@ -27,8 +27,8 @@ app.use("/", router);
 // 监听 / 路径的 get 请求
 
 
-const privateKey = fs.readFileSync("../../https/summerxiatian.top.key", "utf8");
-const certificate = fs.readFileSync("../../https/summerxiatian.top.pem", "utf8");
+const privateKey = fs.readFileSync("./https/summerxiatian.top.key", "utf8");
+const certificate = fs.readFileSync("./https/summerxiatian.top.pem", "utf8");
 
 const credentials = { key: privateKey, cert: certificate };
 const httpsServer = https.createServer(credentials, app);
