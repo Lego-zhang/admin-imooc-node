@@ -41,6 +41,6 @@ const SSLPORT = 18082;
 //   console.log("Http Server is running on http://%s:%s", address, port);
 // });
 
-httpsServer.listen(SSLPORT, function() {
-  console.log("HTTPS Server is running on: https://localhost:%s", SSLPORT);
+httpsServer.listen(18082, function() {
+  console.log("HTTPS Server is running on: https://localhost:%s", 18082);
 });
