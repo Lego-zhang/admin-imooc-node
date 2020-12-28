@@ -34,7 +34,7 @@ router.use((req, res, next) => {
  * 注意两点：
  * 第一，方法的参数不能减少
  * 第二，方法的必须放在路由最后
- */
+ */1
 router.use((err, req, res, next) => {
   console.log(err);
   if (err.name && err.name === "UnauthorizedError") {
